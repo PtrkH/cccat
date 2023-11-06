@@ -1,17 +1,79 @@
-// Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
-// then press Enter. You can now see whitespace characters in your code.
-public class Main {
-    public static void main(String[] args) {
-        // Press Opt+Enter with your caret at the highlighted text to see how
-        // IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-        // Press Ctrl+R or click the green arrow button in the gutter to run the code.
-        for (int i = 1; i <= 5; i++) {
+public class cccat {
+    private static final String OPTION_NUMBER_LINES = "-n";
+    private static final String OPTION_NUMBER_NONBLANK = "-b";
 
-            // Press Ctrl+D to start debugging your code. We have set one breakpoint
-            // for you, but you can always add more by pressing Cmd+F8.
-            System.out.println("i = " + i);
+    public static void main(String[] args) throws IOException {
+        String lineNumberSetting = args.length > 0 ? getLineNumberSetting(args[0]) : "";
+        List<String> inputs = parseInputs(args, lineNumberSetting);
+
+        if (inputs.isEmpty()) {
+            inputs.add("-"); // default to standard input
+        }
+
+        processInputs(inputs, lineNumberSetting);
+    }
+
+    private static void processInputs(List<String> inputs, String lineNumberSetting) throws IOException {
+        for (String input : inputs) {
+            Path path = input.equals("-") ? null : Path.of(input);
+            printFile(path, lineNumberSetting);
         }
     }
+
+    private static void printFile(Path filePath, String lineNumberSetting) throws IOException {
+        int lineNumber = 1;
+        try (BufferedReader reader = filePath == null ? new BufferedReader(new InputStreamReader(System.in))
+                : Files.newBufferedReader(filePath)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lineNumber = printLine(line, lineNumber, lineNumberSetting);
+            }
+        }
+    }
+
+    private static int printLine(String line, int lineNumber, String lineNumberSetting) {
+        boolean shouldPrintLineNum = !lineNumberSetting.isEmpty() && (lineNumberSetting.equals(OPTION_NUMBER_LINES)
+                || (lineNumberSetting.equals(OPTION_NUMBER_NONBLANK) && !line.trim().isEmpty()));
+
+        if (shouldPrintLineNum) {
+            System.out.printf("%d %s%n", lineNumber++, line);
+        } else {
+            System.out.println(line);
+        }
+        return lineNumber;
+    }
+
+    private static List<String> parseInputs(String[] args, String lineNumberSetting) {
+        List<String> inputs = new ArrayList<>();
+        int startIndex = lineNumberSetting.isEmpty() ? 0 : 1;
+        for (int i = startIndex; i < args.length; i++) {
+            inputs.add(args[i]);
+        }
+        return inputs;
+    }
+
+    private static String getLineNumberSetting(String arg) {
+        if (arg.equals(OPTION_NUMBER_LINES) || arg.equals(OPTION_NUMBER_NONBLANK)) {
+            return arg;
+        }
+        return "";
+    }
+
+    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[1024];
+        int length;
+        while ((length = inputStream.read(data)) != -1) {
+            buffer.write(data, 0, length);
+        }
+        return buffer.toByteArray();
+    }
+
 }
